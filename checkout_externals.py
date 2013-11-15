@@ -8,7 +8,8 @@ def find_top_dir():
     while not os.path.isdir(git_path):
         current_path = '/'.join(current_path.split('/')[:-1])
         if current_path == "":
-            raise Exception('Could not find .git directory.' +\
+            raise Exception('Could not find .git directory in ' +\
+                '%s.' % os.getcwd() +\
                 ' Call this script from a git repository.')
         git_path = os.path.join(current_path, '.git')
     return current_path
