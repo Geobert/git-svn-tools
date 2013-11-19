@@ -16,7 +16,7 @@ def find_top_dir():
 
 
 def get_externals_list(top_path, repo_root):
-    result = subprocess.check_output(['git svn show-externals'], shell=True)
+    result = subprocess.check_output([gitpath, 'svn', 'show-externals'], shell=True)
     folder = ""
     result = result.split('\n')
     externals = []
@@ -36,7 +36,7 @@ def get_externals_list(top_path, repo_root):
 
 
 def get_repo_root():
-    result = subprocess.check_output(['git svn info'], shell=True)
+    result = subprocess.check_output([gitpath, 'svn', 'info'], shell=True)
     result = result.split('\n')
     for line in result:
         if line.startswith('Repository Root:'):
@@ -46,11 +46,13 @@ def get_repo_root():
 
 
 def checkout_repo(target, name):
+    target = target.replace('\\', '/')
+    name = name.replace('\\', '/')
     if os.path.isdir(name):
         print "Path %s already exists." % name
         return
     print "Cloning %s to %s" % (target, name)
-    subprocess.call(['git svn clone %s %s' % (target, name)], shell=True)
+    subprocess.call([gitpath, 'svn', 'clone', target, name], shell=True)
 
 
 def add_to_ignore_file(top_path, name):
@@ -74,6 +76,7 @@ def norm_url(url):
 
 
 if __name__ == "__main__":
+    gitpath = "C:\\Program Files (x86)\\Git\\bin\\git.exe"
     top_path = find_top_dir()
     repo_root = get_repo_root()
     externals_list = get_externals_list(top_path, repo_root)
