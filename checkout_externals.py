@@ -32,7 +32,9 @@ def get_externals_list(top_dir, repo_root):
             folder = line[3:]
         else:
             target, name = line.split(' ')
+            print target, name
             name = os.path.join(top_dir, folder, name)
+            target = mixed_url_workaround(target)
             if target.startswith('/'):
                 target = os.path.join(repo_root, target[1:])
             target = norm_url(target)
