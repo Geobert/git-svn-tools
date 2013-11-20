@@ -27,13 +27,24 @@ def get_externals_list(top_path, repo_root):
             folder = line[3:]
         else:
             target, name = line.split(' ')
+            target = norm_url(target)
+            target = mixed_url_workaround(target)
             name = os.path.join(top_path, folder, name)
             if target.startswith('/'):
                 target = os.path.join(repo_root, target[1:])
-            target = norm_url(target)
             externals.append((target, name))
     return externals
 
+
+def mixed_url_workaround(target):
+	try:
+		index = target.index('://')
+		index = target.rfind('/', 0, index)
+		target = target[index + 1:]
+	except ValueError, e:
+		pass
+	return target
+		
 
 def get_repo_root():
     result = subprocess.check_output([gitpath, 'svn', 'info'], shell=True)
