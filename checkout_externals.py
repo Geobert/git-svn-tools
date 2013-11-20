@@ -15,7 +15,12 @@ def find_top_dir():
     return current_path
 
 
-def get_externals_list(top_path, repo_root):
+def get_externals_list(top_dir, repo_root):
+    #Do we have chached values
+    externals = read_externals_cache(top_dir, repo_root)
+    if externals != None:
+        return externals
+    #No cached values, so fetch them
     result = subprocess.check_output([gitpath, 'svn', 'show-externals'], shell=True)
     folder = ""
     result = result.split('\n')
@@ -27,11 +32,35 @@ def get_externals_list(top_path, repo_root):
             folder = line[3:]
         else:
             target, name = line.split(' ')
-            name = os.path.join(top_path, folder, name)
+            name = os.path.join(top_dir, folder, name)
             if target.startswith('/'):
                 target = os.path.join(repo_root, target[1:])
             target = norm_url(target)
             externals.append((target, name))
+    update_externals_cache(externals, top_dir, repo_root)
+    return externals
+
+
+def update_externals_cache(externals, top_dir, repo_root):
+    try:
+        cache_file = os-path.join(top_dir, '.git', 'externals_cache')
+    except Exception:
+        return None
+    cache = open(cache_file, 'w')
+    for target, name in externals:
+        name = name.replace(repo_root, '/')
+        cache_file.write('%s, %s\n' % (target, name))
+
+
+def read_externals_cache(top_dir, repo_root):
+    cache_file = os-path.join(top_dir, '.git', 'externals_cache')
+    cache = open(cache_file, 'r')
+    externals = []
+    for line in cache:
+        line = line.replace('\n', '')
+        target, name = line.split(', ')
+        name = repo_root + name[1:]
+        externals.append((target, name))
     return externals
 
 
