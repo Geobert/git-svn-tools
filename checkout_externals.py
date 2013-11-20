@@ -12,7 +12,7 @@ def find_top_dir():
                 '%s.' % os.getcwd() +\
                 ' Call this script from a git repository.')
         git_path = os.path.join(current_path, '.git')
-    return current_path
+    return norm_path(current_path)
 
 
 def get_externals_list(top_dir, repo_root):
@@ -36,30 +36,34 @@ def get_externals_list(top_dir, repo_root):
             if target.startswith('/'):
                 target = os.path.join(repo_root, target[1:])
             target = norm_url(target)
+            name = norm_path(name)
             externals.append((target, name))
     update_externals_cache(externals, top_dir, repo_root)
     return externals
 
 
 def update_externals_cache(externals, top_dir, repo_root):
-    try:
-        cache_file = os-path.join(top_dir, '.git', 'externals_cache')
-    except Exception:
-        return None
+    print "update cache"
+    cache_file = os.path.join(top_dir, '.git', 'externals_cache')
     cache = open(cache_file, 'w')
     for target, name in externals:
-        name = name.replace(repo_root, '/')
-        cache_file.write('%s, %s\n' % (target, name))
+        print top_dir
+        name = name.replace(top_dir, '')
+        cache.write('%s, %s\n' % (target, name))
+        print '%s, %s\n' % (target, name)
 
 
 def read_externals_cache(top_dir, repo_root):
-    cache_file = os-path.join(top_dir, '.git', 'externals_cache')
-    cache = open(cache_file, 'r')
+    cache_file = os.path.join(top_dir, '.git', 'externals_cache')
+    try:
+        cache = open(cache_file, 'r')
+    except IOError:
+        return None
     externals = []
     for line in cache:
         line = line.replace('\n', '')
         target, name = line.split(', ')
-        name = repo_root + name[1:]
+        name = top_dir + name
         externals.append((target, name))
     return externals
 
@@ -75,8 +79,6 @@ def get_repo_root():
 
 
 def checkout_repo(target, name):
-    target = target.replace('\\', '/')
-    name = name.replace('\\', '/')
     if os.path.isdir(name):
         print "Path %s already exists." % name
         return
@@ -85,13 +87,18 @@ def checkout_repo(target, name):
 
 
 def add_to_ignore_file(top_path, name):
-    exclude_file = open(os.path.join(top_path, '.git/info/exclude'), 'r')
-    lines = exclude_file.readlines()
-    name = name[len(top_path):]
-    for l in lines:
-        if l.startswith(name):
-            print "Path %s is already in exclude list." % name
-            return
+    try:
+        exclude_file = open(os.path.join(top_path, '.git/info/exclude'), 'r')
+        lines = exclude_file.readlines()
+        name = name[len(top_path):]
+        for l in lines:
+            if l.startswith(name):
+                print "Path %s is already in exclude list." % name
+                return
+    except IOError:
+        #File does not exist. Create it.
+        exclude_file = open(os.path.join(top_path, '.git/info/exclude'), 'w')
+        exclude_file.close()
     print "Adding path %s to exclude list." % name
     exclude_file = open(os.path.join(top_path, '.git/info/exclude'), 'a')
     exclude_file.write("%s\n" % name)
@@ -101,8 +108,15 @@ def add_to_ignore_file(top_path, name):
 def norm_url(url):
     protocol, path = url.split('://')
     path = os.path.normpath(path)
+    path = path.replace('\\', '/')
     return '://'.join((protocol, path))
 
+
+def norm_path(path):
+    path = os.path.normpath(path)
+    path = path.replace('\\', '/')
+    return path
+    
 
 if __name__ == "__main__":
     gitpath = "C:\\Program Files (x86)\\Git\\bin\\git.exe"
