@@ -1,5 +1,6 @@
 import os.path
 import subprocess
+import sys
 
 
 def find_top_dir():
@@ -32,7 +33,6 @@ def get_externals_list(top_dir, repo_root):
             folder = line[3:]
         else:
             target, name = line.split(' ')
-            print target, name
             name = os.path.join(top_dir, folder, name)
             target = mixed_url_workaround(target)
             if target.startswith('/'):
@@ -90,12 +90,14 @@ def get_repo_root():
     raise Exception('Could not find repository root .')
 
 
-def checkout_repo(target, name):
+def checkout_repo(target, name, parameters):
     if os.path.isdir(name):
         print "Path %s already exists." % name
         return
     print "Cloning %s to %s" % (target, name)
-    subprocess.call([gitpath, 'svn', 'clone', target, name], shell=True)
+    git_call = [gitpath, 'svn', 'clone', target, name]
+    git_call = git_call + parameters
+    subprocess.call(git_call, shell=True)
 
 
 def add_to_ignore_file(top_path, name):
@@ -132,11 +134,12 @@ def norm_path(path):
 
 if __name__ == "__main__":
     gitpath = "C:\\Program Files (x86)\\Git\\bin\\git.exe"
+    parameters = sys.argv[1:]
     top_path = find_top_dir()
     repo_root = get_repo_root()
     externals_list = get_externals_list(top_path, repo_root)
     print "Found %i externals." % len(externals_list)
     for target, name in externals_list:
-        checkout_repo(target, name)
+        checkout_repo(target, name, parameters)
         add_to_ignore_file(top_path, name)
         print ""
